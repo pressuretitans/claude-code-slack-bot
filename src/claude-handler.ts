@@ -2,6 +2,7 @@ import { query, type SDKMessage } from '@anthropic-ai/claude-code';
 import { ConversationSession } from './types';
 import { Logger } from './logger';
 import { McpManager, McpServerConfig } from './mcp-manager';
+import { config } from './config';
 
 export class ClaudeHandler {
   private sessions: Map<string, ConversationSession> = new Map();
@@ -43,6 +44,13 @@ export class ClaudeHandler {
       outputFormat: 'stream-json',
       permissionMode: slackContext ? 'default' : 'bypassPermissions',
     };
+
+    // Apply persona configuration
+    if (config.persona.enabled) {
+      options.appendSystemPrompt = config.persona.systemPrompt;
+      // Set the model via environment variable so the SDK picks it up
+      process.env.ANTHROPIC_MODEL = config.persona.model;
+    }
 
     // Add permission prompt tool if we have Slack context
     if (slackContext) {

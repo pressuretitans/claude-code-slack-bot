@@ -155,11 +155,11 @@ export class SlackHandler {
       isDM ? user : undefined
     );
 
-    // Working directory is always required
-    if (!workingDirectory) {
+    // Working directory is required for channels, optional for DMs
+    if (!workingDirectory && !isDM) {
       let errorMessage = `⚠️ No working directory set. `;
-      
-      if (!isDM && !this.workingDirManager.hasChannelWorkingDirectory(channel)) {
+
+      if (!this.workingDirManager.hasChannelWorkingDirectory(channel)) {
         // No channel default set
         errorMessage += `Please set a default working directory for this channel first using:\n`;
         if (config.baseDirectory) {
@@ -179,7 +179,7 @@ export class SlackHandler {
       } else {
         errorMessage += `Please set one first using:\n\`cwd /path/to/directory\``;
       }
-      
+
       await say({
         text: errorMessage,
         thread_ts: thread_ts || ts,

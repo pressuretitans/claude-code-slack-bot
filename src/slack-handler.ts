@@ -713,22 +713,16 @@ export class SlackHandler {
   }
 
   setupEventHandlers() {
-    // Handle direct messages
+    // Handle all messages (DMs and channels) — no @mention trigger required
     this.app.message(async ({ message, say }) => {
-      if (message.subtype === undefined && 'user' in message) {
-        this.logger.info('Handling direct message event');
-        await this.handleMessage(message as MessageEvent, say);
+      if (message.subtype === undefined && 'user' in message && !('bot_id' in message)) {
+        // Strip any @mentions of the bot from the text
+        const text = 'text' in message && message.text
+          ? (message.text as string).replace(/<@[^>]+>/g, '').trim()
+          : undefined;
+        this.logger.info('Handling message event', { channel: (message as any).channel });
+        await this.handleMessage({ ...message, text } as MessageEvent, say);
       }
-    });
-
-    // Handle app mentions
-    this.app.event('app_mention', async ({ event, say }) => {
-      this.logger.info('Handling app mention event');
-      const text = event.text.replace(/<@[^>]+>/g, '').trim();
-      await this.handleMessage({
-        ...event,
-        text,
-      } as MessageEvent, say);
     });
 
     // Handle file uploads in threads
